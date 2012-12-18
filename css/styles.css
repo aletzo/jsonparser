@@ -1,0 +1,7 @@
+#page {
+    padding: 50px;
+    min-width: 600px;
+}
+textarea {
+    width: 100%;
+}

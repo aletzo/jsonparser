@@ -1,8 +1,13 @@
 <?php
 
-function openingBracket( & $before, & $after, & $level )
+function openingBracket( & $before, & $after, & $level, $prev )
 {
-    $before .= str_pad( '', $level, "\t", STR_PAD_LEFT );
+    if ( $prev
+        && $prev != ','
+    ) {
+        $before = "\n" . str_pad( '', $level, "\t", STR_PAD_LEFT );
+    }
+
     $after  = "\n";
 
     $level++;
@@ -10,14 +15,17 @@ function openingBracket( & $before, & $after, & $level )
     $after .= str_pad( '', $level, "\t", STR_PAD_LEFT );
 }
 
-function closingBracket( & $before, & $after, & $level )
+function closingBracket( & $before, & $after, & $level, $prev )
 {
-    $before .= str_pad( '', $level, "\t", STR_PAD_LEFT );
-    $after  = "\n";
-
     $level--;
-    
-    $after .= str_pad( '', $level, "\t", STR_PAD_LEFT );
+
+    $before = "\n" . str_pad( '', $level, "\t", STR_PAD_LEFT );
+
+    if ( $next
+        && $next != ','
+    ) {
+        $after = "\n" . str_pad( '', $level, "\t", STR_PAD_LEFT );
+    }
 }
 
 if ( $_POST ) {
@@ -33,6 +41,12 @@ if ( $_POST ) {
 
     for ( $i = 0; $i < $limit; $i++ ) {
         $char = $from[$i];
+        $next = ( isset( $from[$i + 1] ) )
+                ? $from[$i + 1]
+                : null;
+        $prev = ( $i > 0 )
+                ? $from[$i - 1]
+                : null;
 
         $before = '';
         $after  = '';
@@ -40,14 +54,12 @@ if ( $_POST ) {
         switch ( $char ) {
             case '{':
                 if ( ! $inString ) {
-                    openingBracket( $before, $after, $level );
+                    openingBracket( $before, $after, $level, $prev );
                 }
                 break;
             case '[':
                 if ( ! $inString ) {
-                    $before = "\n";
-
-                    openingBracket( $before, $after, $level );
+                    openingBracket( $before, $after, $level, $prev );
                 }
                 break;
             case '"':
@@ -60,20 +72,12 @@ if ( $_POST ) {
                 break;
             case '}':
                 if ( ! $inString ) {
-                    $level--;
-
-                    $before = "\n";
-
-                    closingBracket( $before, $after, $level );
+                    closingBracket( $before, $after, $level, $next );
                 }
                 break;
             case ']':
                 if ( ! $inString ) {
-                    $level--;
-
-                    $before = "\n";
-
-                    closingBracket( $before, $after, $level );
+                    closingBracket( $before, $after, $level, $next );
                 }
                 break;
             default:
